@@ -138,3 +138,51 @@ class AIPlayer(Player):
 
         tempList = [foodNum, workerCoords, isCarrying, food_1_dist, food_2_dist, tunnelDist]
         return tempList
+
+    #
+    #reward
+    #
+    #Description: takes a list, and returns a value to the AI
+    #
+    #Parameters:
+    #   compressStated - a compressState (list)
+    #
+    #Returns: A value between 1 & -1
+    def reward(self, compressStated):
+        foodCount = compressStated[0] #foodcount stored in index zero
+        if foodCount >= 12:
+            return 1 #won game
+        else
+            return -.1 #has not won
+        ##TODO## determine case/metric for losing
+
+    #
+    #writeList
+    #
+    #Description: Takes a list of state utilities, prints it out to a file
+    #
+    #Parameters
+    #   utilityList - a list of utility values
+    #
+    def writeList(self, utilityList):
+        utilityFile = open('utility.txt', 'w')
+        for util in utilityList:
+            utilityFile.write("%d\n" % util)
+        utilityFile.close()
+
+    #
+    #readList
+    #
+    #Description: Reads a list of utility values from a file
+    #
+    #Returns: A list of state utilities
+    #
+    #Reference: http://stackoverflow.com/questions/3925614/how-do-you-read-a-file-into-a-list-in-python
+    #
+    def readList(self):
+        readList = []
+        with open("C:\Users\Nicholas\Desktop\Spring_2017\CS421\Antics\AI\utility") as file:
+            for line in file:
+                line = line.strip()
+                line.append(line)
+        return readList
