@@ -29,6 +29,11 @@ class AIPlayer(Player):
     ##
     def __init__(self, inputPlayerId):
         super(AIPlayer,self).__init__(inputPlayerId, "TED")
+        self.alpha = .2
+        #loads utility file if it is present, leaves list empty otherwise
+        self.utilityFile = []
+        if filepath.isFile(larsonn17_simpson18_utilities):
+            self.utilityFile = self.readList()
 
 
     #getPlacement
@@ -165,7 +170,7 @@ class AIPlayer(Player):
     #   utilityList - a list of utility values
     #
     def writeList(self, utilityList):
-        utilityFile = open('utility.txt', 'w')
+        utilityFile = open('larsonn17_simpson18_utilities.txt', 'w')
         for util in utilityList:
             utilityFile.write("%d\n" % util)
         utilityFile.close()
@@ -181,7 +186,7 @@ class AIPlayer(Player):
     #
     def readList(self):
         readList = []
-        with open("C:\Users\Nicholas\Desktop\Spring_2017\CS421\Antics\AI\utility") as file:
+        with open("C:\Users\Nicholas\Desktop\Spring_2017\CS421\Antics\AI\larsonn17_simpson18_utilities") as file:
             for line in file:
                 line = line.strip()
                 line.append(line)
