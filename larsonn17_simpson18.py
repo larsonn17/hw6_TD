@@ -29,11 +29,18 @@ class AIPlayer(Player):
     ##
     def __init__(self, inputPlayerId):
         super(AIPlayer,self).__init__(inputPlayerId, "TED")
+
+        #Constants
         self.alpha = .2
+        self.lambdA= .8
+        self.numOfState = 3 #number of previous states to modify when adjusting utility ##TODO pick valid value
+
         #loads utility file if it is present, leaves list empty otherwise
         self.utilityFile = []
+        self.utilityExists = False
         if filepath.isFile(larsonn17_simpson18_utilities):
             self.utilityFile = self.readList()
+            self.utilityExists = True
 
 
     #getPlacement
