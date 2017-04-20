@@ -29,11 +29,18 @@ class AIPlayer(Player):
     ##
     def __init__(self, inputPlayerId):
         super(AIPlayer,self).__init__(inputPlayerId, "TED")
+
+        #Constants
         self.alpha = .2
+        self.lambdA= .8
+        self.numOfState = 3 #number of previous states to modify when adjusting utility ##TODO pick valid value
+
         #loads utility file if it is present, leaves list empty otherwise
         self.utilityFile = []
+        self.utilityExists = False
         if filepath.isFile(larsonn17_simpson18_utilities):
             self.utilityFile = self.readList()
+            self.utilityExists = True
 
 
     #getPlacement
@@ -141,7 +148,16 @@ class AIPlayer(Player):
         else:
             tunnelDist = 100 #really big value
 
-        tempList = [foodNum, workerCoords, isCarrying, food_1_dist, food_2_dist, tunnelDist]
+        #checks to see if anyone has won/lost
+        if enemyQueen is None or playerInv.foodCount >= 12 or (len(enemyInv.ants) == 1 and enemyInv.foodCount == 0):
+            win = 1
+        elif playerQueen is None or enemyInv.foodCount >= 12or (len(playerInv.ants) == 1 and playerInv.foodCount == 0):
+            win = 0
+        else:
+            win = 0.5
+            
+
+        tempList = [foodNum, workerCoords, isCarrying, food_1_dist, food_2_dist, tunnelDist, win]
         return tempList
 
     #
@@ -154,12 +170,13 @@ class AIPlayer(Player):
     #
     #Returns: A value between 1 & -1
     def reward(self, compressStated):
-        foodCount = compressStated[0] #foodcount stored in index zero
-        if foodCount >= 12:
+        #foodCount = compressStated[0] #foodcount stored in index zero
+        if compressStated[6] == 1:
             return 1 #won game
-        else
-            return -.1 #has not won
-        ##TODO## determine case/metric for losing
+        elif compressedStated[6] == 0:
+            return -1.0 #lost game
+        else:
+            return -0.1
 
     #
     #writeList
