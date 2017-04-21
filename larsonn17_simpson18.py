@@ -1,6 +1,7 @@
   # -*- coding: latin-1 -*-
 import random
 import sys
+import os
 sys.path.append("..")  #so other modules can be found in parent dir
 from Player import *
 from Constants import *
@@ -38,9 +39,13 @@ class AIPlayer(Player):
         #loads utility file if it is present, leaves list empty otherwise
         self.utilityFile = []
         self.utilityExists = False
-        if filepath.isFile(larsonn17_simpson18_utilities):
+        if os.path.exists('larsonn17_simpson18_utilities.txt'):
+            print " File exists!"
             self.utilityFile = self.readList()
             self.utilityExists = True
+            #print " Utility File: " + str(self.utilityFile)
+        else:
+            print " File DNE"
 
 
     #getPlacement
@@ -155,7 +160,7 @@ class AIPlayer(Player):
             win = 0
         else:
             win = 0.5
-            
+
 
         tempList = [foodNum, workerCoords, isCarrying, food_1_dist, food_2_dist, tunnelDist, win]
         return tempList
@@ -177,7 +182,6 @@ class AIPlayer(Player):
             return -1.0 #lost game
         else:
             return -0.1
-
     #
     #writeList
     #
@@ -203,8 +207,37 @@ class AIPlayer(Player):
     #
     def readList(self):
         readList = []
-        with open("C:\Users\Nicholas\Desktop\Spring_2017\CS421\Antics\AI\larsonn17_simpson18_utilities") as file:
+        with open('larsonn17_simpson18_utilities.txt') as file:
             for line in file:
                 line = line.strip()
-                line.append(line)
+                readList.append(line)
         return readList
+
+    ####################################
+    #Code to test read and write functionality
+    # This was setup in its own seperate python file
+    #
+    #import os
+    #
+    #if os.path.exists('larsonn17_simpson18_utilities.txt'):
+    #    print " List file exists!"
+    #
+    #testList = [1,2,3,4,5,6,7]
+    #print " Test List: " + str(testList)
+    #
+    #def writeList(utilityList):
+    #      utilityFile = open('larsonn17_simpson18_utilities.txt', 'w')
+    #      for util in utilityList:
+    #          utilityFile.write("%d\n" % util)
+    #      utilityFile.close()
+    #
+    #def readList():
+    #    readList = []
+    #    with open('larsonn17_simpson18_utilities.txt') as file:
+    #        for line in file:
+    #            line = line.strip()
+    #            readList.append(line)
+    #    return readList
+    #writeList(testList)
+    #recoveredList = readList()
+    #print " Recovered List: " + str(recoveredList)
