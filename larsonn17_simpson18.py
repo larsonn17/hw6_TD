@@ -1,5 +1,6 @@
-  # -*- coding: latin-1 -*-
+# -*- coding: latin-1 -*-
 import random
+import pickle
 import sys
 import os
 sys.path.append("..")  #so other modules can be found in parent dir
@@ -38,8 +39,10 @@ class AIPlayer(Player):
 
         #loads utility file if it is present, leaves list empty otherwise
         self.utilityFile = []
+        #testList = [True, 4, -5, False, True] #test list to use
+        #self.writeList(testList)
         self.utilityExists = False
-        if os.path.exists('larsonn17_simpson18_utilities.txt'):
+        if os.path.exists('larsonn17_simpson18_utilities.pk1'):
             print " File exists!"
             self.utilityFile = self.readList()
             self.utilityExists = True
@@ -60,7 +63,7 @@ class AIPlayer(Player):
     def getPlacement(self, currentState):
 
         if currentState.phase == SETUP_PHASE_1:
-            return[(2,1), (7,1), (0,3), (1,3), (2,3), (3,3), (4,3),( 6,3), (7,3), (8,3), (9,3)];    #grass placement
+            return[(0,0), (6,1), (0,3), (1,3), (2,3), (3,3), (4,3),( 6,3), (7,3), (8,3), (9,3)];    #grass placement
         #Randomly places enemy food, *stolen from Dr. Nuxoll's Simple Food Gatherer AI*
         elif currentState.phase == SETUP_PHASE_2:
             numToPlace = 2
@@ -190,10 +193,11 @@ class AIPlayer(Player):
     #Parameters
     #   utilityList - a list of utility values
     #
+    #Reference: https://docs.python.org/2/library/pickle.html
+    #
     def writeList(self, utilityList):
-        utilityFile = open('larsonn17_simpson18_utilities.txt', 'w')
-        for util in utilityList:
-            utilityFile.write("%d\n" % util)
+        utilityFile = open('larsonn17_simpson18_utilities.pk1', 'wb')
+        pickle.dump(utilityList, utilityFile)
         utilityFile.close()
 
     #
@@ -203,41 +207,11 @@ class AIPlayer(Player):
     #
     #Returns: A list of state utilities
     #
-    #Reference: http://stackoverflow.com/questions/3925614/how-do-you-read-a-file-into-a-list-in-python
+    #Reference: https://docs.python.org/2/library/pickle.html
     #
     def readList(self):
         readList = []
-        with open('larsonn17_simpson18_utilities.txt') as file:
-            for line in file:
-                line = line.strip()
-                readList.append(line)
+        utilityFile = open('larsonn17_simpson18_utilities.pk1', 'rb')
+        readList = pickle.load(utilityFile)
+        utilityFile.close()
         return readList
-
-    ####################################
-    #Code to test read and write functionality
-    # This was setup in its own seperate python file
-    #
-    #import os
-    #
-    #if os.path.exists('larsonn17_simpson18_utilities.txt'):
-    #    print " List file exists!"
-    #
-    #testList = [1,2,3,4,5,6,7]
-    #print " Test List: " + str(testList)
-    #
-    #def writeList(utilityList):
-    #      utilityFile = open('larsonn17_simpson18_utilities.txt', 'w')
-    #      for util in utilityList:
-    #          utilityFile.write("%d\n" % util)
-    #      utilityFile.close()
-    #
-    #def readList():
-    #    readList = []
-    #    with open('larsonn17_simpson18_utilities.txt') as file:
-    #        for line in file:
-    #            line = line.strip()
-    #            readList.append(line)
-    #    return readList
-    #writeList(testList)
-    #recoveredList = readList()
-    #print " Recovered List: " + str(recoveredList)
