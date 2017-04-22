@@ -182,6 +182,9 @@ class AIPlayer(Player):
             all_food_coords.append(food.coords)
 
         foodNum = playerInv.foodCount
+        tunnel = getConstrList(currentState, currentState.whoseTurn, (TUNNEL,))
+        anthill = getConstrList(currentState, currentState.whoseTurn, (ANTHILL,))
+        anthillCoords = anthill[0].coords
 
         for ant in playerInv.ants:
             if ant.type == QUEEN:
@@ -193,14 +196,14 @@ class AIPlayer(Player):
                         isCarrying = 1
                 if ant.carrying == True:
                     isCarrying = 1
-
                 food_1_dist = approxDist(workerCoords, my_food_coords[0])
                 food_2_dist = approxDist(workerCoords, my_food_coords[1])
-
-        tunnel = getConstrList(currentState, currentState.whoseTurn, (TUNNEL,))
-        if tunnel != None:
-            tunnelCoords = tunnel[0].coords
-            tunnelDist = approxDist(workerCoords, tunnelCoords)
+                if tunnel != None:
+                    tunnelCoords = tunnel[0].coords
+                    tunnelDist = approxDist(workerCoords, tunnelCoords)
+                    if isCarrying and (ant.coords == tunnelCoords or ant.coords == anthillCoords):
+                        isCarrying = 0
+                        foodNum += 1
 
         #checks to see if anyone has won/lost
         if enemyQueen is None or playerInv.foodCount >= 12 or (len(enemyInv.ants) == 1 and enemyInv.foodCount == 0):
