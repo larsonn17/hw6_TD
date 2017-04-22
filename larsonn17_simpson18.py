@@ -209,17 +209,27 @@ class AIPlayer(Player):
     #
     #Returns: Utility of state
     def addUtility (self, currentState, potenialState):
+<<<<<<< HEAD
         currStateUtil = self.compressState(currentState)
         nextStateUtil = self.compressState(potentialState)
 
         #####NEED WAY TO GET INDEX#########
         if currStateUtil not in self.utilityList:
+=======
+        currState = self.compressState(currentState)
+        nextState = self.compressState(potentialState)
+        index = 0
+        
+        if currState not in self.stateList:
+>>>>>>> abf071113b5103ae44cb644d0e5bb94b76a67a87
             self.utilityList[currStateUtilIndex] = 0
 
-        if nextStateUtil not in self.utilityList:
-            self.utilityList[nextStateUtilIndex] = 0
+        if nextState not in self.stateList:
+            self.stateList.append(nextStateUtil)
+            self.utilityList.append = 0
         else:
-            self.utilityList[curStateIndex] += self.alpha*(self.reward(curStateUtil) + self.lambdA*self.utilityList[nextStateUtilIndex] - self.utilityDict[curStateUtilityIndex])
+            index = self.stateList.index(currState)
+            self.utilityList[index] += self.alpha*(self.reward(curStateUtil) + self.lambdA*self.utilityList[nextStateUtilIndex] - self.utilityDict[curStateUtilityIndex])
 
         return self.utilityList[curStateUtilIndex]
 
