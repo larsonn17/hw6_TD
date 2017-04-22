@@ -107,12 +107,11 @@ class AIPlayer(Player):
             if currStateUtility > bestUtility:
                bestUtility = currStateUtility
                bestMove = move
-
-        #add in random chance for move
-        numStates =  sizeof(self.utilityList)
-        chance = (1/numStates)*(random.randint(1,1000))
-        if chance > 10:
-            bestMove =  moveList[random.randint(0,len(moves) - 1)]
+       #add in random chance for move
+       numStates =  sizeof(self.utilityList)
+       chance = (1/numStates)*(random.randint(1,1000))
+       if chance > 10:
+          bestMove =  moveList[random.randint(0,len(moves) - 1)]
 
         if bestMove != None:
             return move
