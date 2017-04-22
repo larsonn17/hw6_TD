@@ -36,16 +36,16 @@ class AIPlayer(Player):
         self.alpha = .2
         self.lambdA= .8
 
-
         #loads utility file if it is present, leaves list empty otherwise
         self.utilityList = []
         self.stateList = []
         #testList = [True, 4, -5, False, True] #test list to use
-        #self.writeList(testList)
+        #self.writeStateAndUtil(testList, testList)
         self.utilityExists = False
         if os.path.exists('larsonn17_simpson18_utilities.pk1'):
             print " File exists!"
-            self.utilityList = self.readList()
+            self.utilityList = self.readUtility()
+            self.stateList = self.readState()
             self.utilityExists = True
             #print " Utility File: " + str(self.utilityFile)
         else:
@@ -110,7 +110,6 @@ class AIPlayer(Player):
         #add in random chance for move
         if bestMove != None:
             return move
-
         else:#If we are out of moves, end our turn
             return Move(END, None, None)
     ####### END OF GET MOVE #######
@@ -220,8 +219,7 @@ class AIPlayer(Player):
 
         
         indexCurr = self.stateList.index(currState)
-        
-        
+
         if currState not in self.stateList:
             self.utilityList[indexCurr] = 0
 
@@ -232,7 +230,7 @@ class AIPlayer(Player):
             indexNext = self.stateList.index(nextState)
             self.utilityList[indexCurr] += self.alpha*(self.reward(currState) + self.lambdA*self.utilityList[indexNext] - self.utilityList[indexCurr])
 
-        return self.utilityList[indexCurr] 
+        return self.utilityList[indexCurr]
 
 
     #
@@ -261,7 +259,7 @@ class AIPlayer(Player):
     #
     #Reference: https://docs.python.org/2/library/pickle.html
     #
-    def writeList(self, utilityList, stateList):
+    def writeStateAndUtil(self, utilityList, stateList):
         utilityFile = open('larsonn17_simpson18_utilities.pk1', 'wb')
         pickle.dump(utilityList, utilityFile)
         utilityFile.close()
