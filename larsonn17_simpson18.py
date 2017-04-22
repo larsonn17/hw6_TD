@@ -224,13 +224,18 @@ class AIPlayer(Player):
     #
     #Reference: https://docs.python.org/2/library/pickle.html
     #
-    def writeList(self, utilityList):
+    def writeList(self, utilityList, stateList):
         utilityFile = open('larsonn17_simpson18_utilities.pk1', 'wb')
         pickle.dump(utilityList, utilityFile)
         utilityFile.close()
 
+        stateFile = open('larsonn17_simpson18_states.pk1', 'wb')
+        pickle.dump(stateList, stateFile)
+        stateFile.close()
+
+
     #
-    #readList
+    #readUtility
     #
     #Description: Reads a list of utility values from a file
     #
@@ -238,9 +243,25 @@ class AIPlayer(Player):
     #
     #Reference: https://docs.python.org/2/library/pickle.html
     #
-    def readList(self):
+    def readUtility(self):
         readList = []
         utilityFile = open('larsonn17_simpson18_utilities.pk1', 'rb')
         readList = pickle.load(utilityFile)
         utilityFile.close()
+        return readList
+
+    #
+    #readState
+    #
+    #Description: Reads a list of utility values from a file
+    #
+    #Returns: A list of state utilities
+    #
+    #Reference: https://docs.python.org/2/library/pickle.html
+    #
+    def readState(self):
+        readList = []
+        stateFile = open('larsonn17_simpson18_states.pk1', 'rb')
+        readList = pickle.load(stateFile)
+        stateFile.close()
         return readList
