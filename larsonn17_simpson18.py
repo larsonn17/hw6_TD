@@ -161,6 +161,32 @@ class AIPlayer(Player):
         return tempList
 
     #
+    #addUtility
+    #
+    #Description: takes a the current state and determines if it
+    #has been visited before
+    #
+    #Parameters:
+    #   currentState - current state of the game
+    #   potentialState - the potential state if the move was made
+    #
+    #Returns: Utility of state
+    def addUtility (self, currentState, potenialState):
+        currStateUtil = self.compressState(currentState)
+        nextStateUtil = self.compressState(potentialState)
+        
+        #####NEED WAY TO GET INDEX#########
+        if currStateUtil not in self.utilityList:
+            self.utilityList[currStateUtilIndex] = 0
+
+        if nextStateUtil not in self.utilityList:
+            self.utilityList[nextStateUtilIndex] = 0
+        else:
+            self.utilityList[curStateIndex] += self.alpha*(self.reward(curStateUtil) + self.lambdA*self.utilityList[nextStateUtilIndex] - self.utilityDict[curStateUtilityIndex])
+
+        return self.utilityList[curStateUtilIndex] 
+
+    #
     #reward
     #
     #Description: takes a list, and returns a value to the AI
