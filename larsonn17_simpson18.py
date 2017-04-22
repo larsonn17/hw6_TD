@@ -1,6 +1,8 @@
-  # -*- coding: latin-1 -*-
+# -*- coding: latin-1 -*-
 import random
+import pickle
 import sys
+import os
 sys.path.append("..")  #so other modules can be found in parent dir
 from Player import *
 from Constants import *
@@ -37,10 +39,16 @@ class AIPlayer(Player):
 
         #loads utility file if it is present, leaves list empty otherwise
         self.utilityFile = []
+        #testList = [True, 4, -5, False, True] #test list to use
+        #self.writeList(testList)
         self.utilityExists = False
-        if filepath.isFile(larsonn17_simpson18_utilities):
+        if os.path.exists('larsonn17_simpson18_utilities.pk1'):
+            print " File exists!"
             self.utilityFile = self.readList()
             self.utilityExists = True
+            #print " Utility File: " + str(self.utilityFile)
+        else:
+            print " File DNE"
 
 
     #getPlacement
@@ -55,7 +63,7 @@ class AIPlayer(Player):
     def getPlacement(self, currentState):
 
         if currentState.phase == SETUP_PHASE_1:
-            return[(2,1), (7,1), (0,3), (1,3), (2,3), (3,3), (4,3),( 6,3), (7,3), (8,3), (9,3)];    #grass placement
+            return[(0,0), (6,1), (0,3), (1,3), (2,3), (3,3), (4,3),( 6,3), (7,3), (8,3), (9,3)];    #grass placement
         #Randomly places enemy food, *stolen from Dr. Nuxoll's Simple Food Gatherer AI*
         elif currentState.phase == SETUP_PHASE_2:
             numToPlace = 2
@@ -86,8 +94,26 @@ class AIPlayer(Player):
     #Return: Move(moveType [int], coordList [list of 2-tuples of ints], buildType [int]
     ##
     def getMove(self, currentState):
-        #If we are out of moves, end our turn
-        return Move(END, None, None)
+        #look at all moves, ignoring build moves
+        moveList = listAllMovementMoves(currentState)
+        bestMove = None
+        bestUtility = -100
+        for move in moveList:
+            #get what the next state will look like if current move is performed
+            nextState = getNextState(currentState, move)
+            nextStateUtility =  random.randint(-10,10) #utilityScore ##TODO##
+            if nextStateUtility > bestUtility:
+                bestUtility = nextStateUtility
+                bestMove = move
+        if bestMove != None:
+            #newState = self.compressState(getNextState(currentState, move))
+            #self.utilityList.append(newState)
+            ##TODO## Determine how I am going to add/store utility scores
+                #as adding utility score to compressed state may directly
+                # interfere with comparision for new states if it changes
+            return move
+        else:#If we are out of moves, end our turn
+            return Move(END, None, None)
     ####### END OF GET MOVE #######
 
     ##
@@ -128,13 +154,26 @@ class AIPlayer(Player):
     #
     def compressState(self, currentState):
         tempList = []
-        myInventory = getCurrPlayerInventory(currentState)
-        for food in foods:
+        my_food_coords = []
+        tunnelDist = 100
+
+        for inv in currentState.inventories:
+            if inv.player == currentState.whoseTurn:
+                playerInv = inv
+            else:
+                enemyInv = inv
+                for ant in enemyInv.ants:
+                    if ant.type == QUEEN:
+                        enemyQueen = ant
+
+        for food in getConstrList(currentState, None, (FOOD,)):
             if food.coords[1] < 5:
                 my_food_coords.append(food.coords)
-        foodNum = myInventory.foodCount
-        #numAnts = len(myInventory.ants)
-        for ant in myInventory.ants:
+        foodNum = playerInv.foodCount
+
+        for ant in playerInv.ants:
+            if ant.type == QUEEN:
+                playerQueen = ant
             if ant.type == WORKER:
                 workerCoords = ant.coords
                 if ant.carrying == True:
@@ -143,19 +182,18 @@ class AIPlayer(Player):
                     isCarrying = False
         food_1_dist = approxDist(workerCoords, my_food_coords[0])
         food_2_dist = approxDist(workerCoords, my_food_coords[1])
-        if tunnel[0] != []:
+
+        tunnel = getConstrList(currentState, currentState.whoseTurn, (TUNNEL,))
+        if tunnel != None:
             tunnelDist = tunnel[0].coords
-        else:
-            tunnelDist = 100 #really big value
 
         #checks to see if anyone has won/lost
         if enemyQueen is None or playerInv.foodCount >= 12 or (len(enemyInv.ants) == 1 and enemyInv.foodCount == 0):
             win = 1
-        elif playerQueen is None or enemyInv.foodCount >= 12or (len(playerInv.ants) == 1 and playerInv.foodCount == 0):
+        elif playerQueen is None or enemyInv.foodCount >= 12 or (len(playerInv.ants) == 1 and playerInv.foodCount == 0):
             win = 0
         else:
             win = 0.5
-            
 
         tempList = [foodNum, workerCoords, isCarrying, food_1_dist, food_2_dist, tunnelDist, win]
         return tempList
@@ -196,14 +234,12 @@ class AIPlayer(Player):
     #
     #Returns: A value between 1 & -1
     def reward(self, compressStated):
-        #foodCount = compressStated[0] #foodcount stored in index zero
         if compressStated[6] == 1:
             return 1 #won game
         elif compressedStated[6] == 0:
             return -1.0 #lost game
         else:
             return -0.1
-
     #
     #writeList
     #
@@ -212,25 +248,46 @@ class AIPlayer(Player):
     #Parameters
     #   utilityList - a list of utility values
     #
-    def writeList(self, utilityList):
-        utilityFile = open('larsonn17_simpson18_utilities.txt', 'w')
-        for util in utilityList:
-            utilityFile.write("%d\n" % util)
+    #Reference: https://docs.python.org/2/library/pickle.html
+    #
+    def writeList(self, utilityList, stateList):
+        utilityFile = open('larsonn17_simpson18_utilities.pk1', 'wb')
+        pickle.dump(utilityList, utilityFile)
         utilityFile.close()
 
+        stateFile = open('larsonn17_simpson18_states.pk1', 'wb')
+        pickle.dump(stateList, stateFile)
+        stateFile.close()
+
+
     #
-    #readList
+    #readUtility
     #
     #Description: Reads a list of utility values from a file
     #
     #Returns: A list of state utilities
     #
-    #Reference: http://stackoverflow.com/questions/3925614/how-do-you-read-a-file-into-a-list-in-python
+    #Reference: https://docs.python.org/2/library/pickle.html
     #
-    def readList(self):
+    def readUtility(self):
         readList = []
-        with open("C:\Users\Nicholas\Desktop\Spring_2017\CS421\Antics\AI\larsonn17_simpson18_utilities") as file:
-            for line in file:
-                line = line.strip()
-                line.append(line)
+        utilityFile = open('larsonn17_simpson18_utilities.pk1', 'rb')
+        readList = pickle.load(utilityFile)
+        utilityFile.close()
+        return readList
+
+    #
+    #readState
+    #
+    #Description: Reads a list of utility values from a file
+    #
+    #Returns: A list of state utilities
+    #
+    #Reference: https://docs.python.org/2/library/pickle.html
+    #
+    def readState(self):
+        readList = []
+        stateFile = open('larsonn17_simpson18_states.pk1', 'rb')
+        readList = pickle.load(stateFile)
+        stateFile.close()
         return readList
