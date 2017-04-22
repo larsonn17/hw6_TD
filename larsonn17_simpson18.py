@@ -103,7 +103,7 @@ class AIPlayer(Player):
         for move in moveList:
             #get what the next state will look like if current move is performed
             nextState = getNextState(currentState, move)
-            nextStateUtility = addUtility(currentState, nextState)
+            nextStateUtility = self.addUtility(currentState, nextState)
             if nextStateUtility > bestUtility:
                bestUtility = nextStateUtility
                bestMove = move
@@ -208,20 +208,29 @@ class AIPlayer(Player):
     #   potentialState - the potential state if the move was made
     #
     #Returns: Utility of state
-    def addUtility (self, currentState, potenialState):
+    def addUtility (self, currentState, potentialState):
         currState = self.compressState(currentState)
         nextState = self.compressState(potentialState)
+
+        print len(self.stateList)
+        if len(self.stateList) == 0:
+            print "Hello"
+            self.stateList.append(currState)
+            self.utilityList.append(0)
+
+        
         indexCurr = self.stateList.index(currState)
-        indexNext = self.stateList.index(nextState)
+        
         
         if currState not in self.stateList:
             self.utilityList[indexCurr] = 0
 
         if nextState not in self.stateList:
             self.stateList.append(nextState)
-            self.utilityList.append = 0
+            self.utilityList.append(0)
         else:
-            self.utilityList[indexCurr] += self.alpha*(self.reward(currState) + self.lambdA*self.utilityList[indexNext] - self.utilityDict[indexCurr])
+            indexNext = self.stateList.index(nextState)
+            self.utilityList[indexCurr] += self.alpha*(self.reward(currState) + self.lambdA*self.utilityList[indexNext] - self.utilityList[indexCurr])
 
         return self.utilityList[indexCurr] 
 
@@ -238,7 +247,7 @@ class AIPlayer(Player):
     def reward(self, compressStated):
         if compressStated[6] == 1:
             return 1 #won game
-        elif compressedStated[6] == 0:
+        elif compressStated[6] == 0:
             return -1.0 #lost game
         else:
             return -0.1
