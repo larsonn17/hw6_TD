@@ -118,6 +118,7 @@ class AIPlayer(Player):
         if bestMove != None:
             return bestMove
         else:#If we are out of moves, end our turn
+            print self.loadedFiles
             return Move(END, None, None)
     ####### END OF GET MOVE #######
 
@@ -232,7 +233,7 @@ class AIPlayer(Player):
     def addUtility (self, currentState, potentialState):
         currState = self.compressState(currentState)
         nextState = self.compressState(potentialState)
-
+        
         #edge cases
         if self.loadedFiles:
             self.stateList.append(currState)
