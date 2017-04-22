@@ -35,16 +35,17 @@ class AIPlayer(Player):
         #Constants
         self.alpha = .2
         self.lambdA= .8
-        self.numOfState = 3 #number of previous states to modify when adjusting utility ##TODO pick valid value
+
 
         #loads utility file if it is present, leaves list empty otherwise
-        self.utilityFile = []
+        self.utilityList = []
+        self.stateList = []
         #testList = [True, 4, -5, False, True] #test list to use
         #self.writeList(testList)
         self.utilityExists = False
         if os.path.exists('larsonn17_simpson18_utilities.pk1'):
             print " File exists!"
-            self.utilityFile = self.readList()
+            self.utilityList = self.readList()
             self.utilityExists = True
             #print " Utility File: " + str(self.utilityFile)
         else:
@@ -98,20 +99,18 @@ class AIPlayer(Player):
         moveList = listAllMovementMoves(currentState)
         bestMove = None
         bestUtility = -100
+        #selectedMove = moveList[random.randint(0,len(moves) - 1)]
         for move in moveList:
             #get what the next state will look like if current move is performed
             nextState = getNextState(currentState, move)
-            nextStateUtility =  random.randint(-10,10) #utilityScore ##TODO##
+            nextStateUtility = addUtility(currentState, nextState)
             if nextStateUtility > bestUtility:
-                bestUtility = nextStateUtility
-                bestMove = move
+               bestUtility = nextStateUtility
+               bestMove = move
+        #add in random chance for move
         if bestMove != None:
-            #newState = self.compressState(getNextState(currentState, move))
-            #self.utilityList.append(newState)
-            ##TODO## Determine how I am going to add/store utility scores
-                #as adding utility score to compressed state may directly
-                # interfere with comparision for new states if it changes
             return move
+
         else:#If we are out of moves, end our turn
             return Move(END, None, None)
     ####### END OF GET MOVE #######
@@ -225,6 +224,7 @@ class AIPlayer(Player):
             self.utilityList[indexCurr] += self.alpha*(self.reward(currState) + self.lambdA*self.utilityList[indexNext] - self.utilityDict[indexCurr])
 
         return self.utilityList[indexCurr] 
+
 
     #
     #reward
