@@ -51,6 +51,8 @@ class AIPlayer(Player):
         else:
             print " File DNE"
 
+        self.loadedFiles = 1
+
 
     #getPlacement
     #Parameters:
@@ -229,9 +231,10 @@ class AIPlayer(Player):
         nextState = self.compressState(potentialState)
 
         #edge cases
-        if len(self.stateList) == 0:
+        if self.loadedFiles:
             self.stateList.append(currState)
             self.utilityList.append(0)
+            self.loadedFiles = 0
 
         inv = getCurrPlayerInventory(currentState)
         if len(inv.ants) < 2:
