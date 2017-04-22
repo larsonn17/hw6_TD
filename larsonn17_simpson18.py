@@ -118,7 +118,6 @@ class AIPlayer(Player):
         if bestMove != None:
             return bestMove
         else:#If we are out of moves, end our turn
-            print self.loadedFiles
             return Move(END, None, None)
     ####### END OF GET MOVE #######
 
@@ -233,23 +232,29 @@ class AIPlayer(Player):
     def addUtility (self, currentState, potentialState):
         currState = self.compressState(currentState)
         nextState = self.compressState(potentialState)
-        
-        #edge cases
-        if self.loadedFiles:
-            self.stateList.append(currState)
-            self.utilityList.append(0)
-            self.loadedFiles = 0
 
-        inv = getCurrPlayerInventory(currentState)
-        if len(inv.ants) < 2:
-            self.stateList.append(currState)
-            self.utilityList.append(0)
+##        #edge cases
+##        if self.loadedFiles:
+##            self.stateList.append(currState)
+##            self.utilityList.append(0)
+##            self.loadedFiles = 0
+
+##        inv = getCurrPlayerInventory(currentState)
+##        if len(inv.ants) < 2:
+##            self.stateList.append(currState)
+##            self.utilityList.append(0)
 
 
-        indexCurr = self.stateList.index(currState)
+##        if len(self.stateList) == 0:
+##            self.stateList.append(currState)
+##            self.utilityList.append(0)
 
         if currState not in self.stateList:
-            self.utilityList[indexCurr] = 0
+            self.stateList.append(currState)
+            indexCurr = self.stateList.index(currState)
+            self.utilityList.append(0)
+            
+        indexCurr = self.stateList.index(currState)
 
         if nextState not in self.stateList:
             self.stateList.append(nextState)
@@ -288,11 +293,11 @@ class AIPlayer(Player):
     #Reference: https://docs.python.org/2/library/pickle.html
     #
     def writeStateAndUtil(self, utilityList, stateList):
-        utilityFile = open('larsonn17_simpson18_utilities.pk1', 'wb')
+        utilityFile = open("AI/" + 'larsonn17_simpson18_utilities.pk1', 'wb')
         pickle.dump(utilityList, utilityFile)
         utilityFile.close()
 
-        stateFile = open('larsonn17_simpson18_states.pk1', 'wb')
+        stateFile = open("AI/" + 'larsonn17_simpson18_states.pk1', 'wb')
         pickle.dump(stateList, stateFile)
         stateFile.close()
 
