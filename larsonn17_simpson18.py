@@ -103,18 +103,18 @@ class AIPlayer(Player):
         for move in moveList:
             #get what the next state will look like if current move is performed
             nextState = getNextState(currentState, move)
-            currStateUtility = addUtility(currentState, nextState)
+            currStateUtility = self.addUtility(currentState, nextState)
             if currStateUtility > bestUtility:
                bestUtility = currStateUtility
                bestMove = move
-       #add in random chance for move
-       numStates =  sizeof(self.utilityList)
-       chance = (1/numStates)*(random.randint(1,1000))
-       if chance > 10:
-          bestMove =  moveList[random.randint(0,len(moves) - 1)]
 
+        #add in random chance for move
+        numStates =  len(self.utilityList)
+        chance = (1/numStates)*(random.randint(1,1000))
+        if chance > 10:
+            bestMove =  moveList[random.randint(0,len(moves) - 1)]
         if bestMove != None:
-            return move
+            return bestMove
         else:#If we are out of moves, end our turn
             return Move(END, None, None)
     ####### END OF GET MOVE #######
@@ -144,6 +144,8 @@ class AIPlayer(Player):
     #
     def registerWin(self, hasWon):
         #method templaste, not implemented
+        self.writeStateAndUtil(self.utilityList, self.stateList)
+        print "Number of States: " + str(len(self.stateList))
         pass
 
     #
@@ -158,7 +160,12 @@ class AIPlayer(Player):
     def compressState(self, currentState):
         tempList = []
         my_food_coords = []
+        all_food_coords = []
         tunnelDist = 100
+        food_1_dist = 100
+        food_2_dist = 100
+        workerCoords = (0,0)
+        isCarrying = 0
 
         for inv in currentState.inventories:
             if inv.player == currentState.whoseTurn:
@@ -172,6 +179,8 @@ class AIPlayer(Player):
         for food in getConstrList(currentState, None, (FOOD,)):
             if food.coords[1] < 5:
                 my_food_coords.append(food.coords)
+            all_food_coords.append(food.coords)
+
         foodNum = playerInv.foodCount
 
         for ant in playerInv.ants:
@@ -179,16 +188,19 @@ class AIPlayer(Player):
                 playerQueen = ant
             if ant.type == WORKER:
                 workerCoords = ant.coords
+                for coords in all_food_coords:
+                    if workerCoords == coords:
+                        isCarrying = 1
                 if ant.carrying == True:
-                    isCarrying = True
-                else:
-                    isCarrying = False
-        food_1_dist = approxDist(workerCoords, my_food_coords[0])
-        food_2_dist = approxDist(workerCoords, my_food_coords[1])
+                    isCarrying = 1
+
+                food_1_dist = approxDist(workerCoords, my_food_coords[0])
+                food_2_dist = approxDist(workerCoords, my_food_coords[1])
 
         tunnel = getConstrList(currentState, currentState.whoseTurn, (TUNNEL,))
         if tunnel != None:
-            tunnelDist = tunnel[0].coords
+            tunnelCoords = tunnel[0].coords
+            tunnelDist = approxDist(workerCoords, tunnelCoords)
 
         #checks to see if anyone has won/lost
         if enemyQueen is None or playerInv.foodCount >= 12 or (len(enemyInv.ants) == 1 and enemyInv.foodCount == 0):
@@ -216,9 +228,16 @@ class AIPlayer(Player):
         currState = self.compressState(currentState)
         nextState = self.compressState(potentialState)
 
+        #edge cases
         if len(self.stateList) == 0:
             self.stateList.append(currState)
             self.utilityList.append(0)
+
+        inv = getCurrPlayerInventory(currentState)
+        if len(inv.ants) < 2:
+            self.stateList.append(currState)
+            self.utilityList.append(0)
+
 
         indexCurr = self.stateList.index(currState)
 
