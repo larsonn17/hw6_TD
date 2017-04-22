@@ -99,15 +99,21 @@ class AIPlayer(Player):
         moveList = listAllMovementMoves(currentState)
         bestMove = None
         bestUtility = -100
-        #selectedMove = moveList[random.randint(0,len(moves) - 1)]
+
         for move in moveList:
             #get what the next state will look like if current move is performed
             nextState = getNextState(currentState, move)
-            nextStateUtility = addUtility(currentState, nextState)
-            if nextStateUtility > bestUtility:
-               bestUtility = nextStateUtility
+            currStateUtility = addUtility(currentState, nextState)
+            if currStateUtility > bestUtility:
+               bestUtility = currStateUtility
                bestMove = move
+
         #add in random chance for move
+        numStates =  sizeof(self.utilityList)
+        chance = (1/numStates)*(random.randint(1,1000))
+        if chance > 10:
+            bestMove =  moveList[random.randint(0,len(moves) - 1)]
+
         if bestMove != None:
             return move
         else:#If we are out of moves, end our turn
