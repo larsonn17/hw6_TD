@@ -39,18 +39,16 @@ class AIPlayer(Player):
         #loads utility file if it is present, leaves list empty otherwise
         self.utilityList = []
         self.stateList = []
-        #testList = [True, 4, -5, False, True] #test list to use
-        #self.writeStateAndUtil(testList, testList)
-        self.utilityExists = False
+        
         if os.path.exists('larsonn17_simpson18_utilities.pk1'):
             print " File exists!"
             self.utilityList = self.readUtility()
             self.stateList = self.readState()
-            self.utilityExists = True
-            #print " Utility File: " + str(self.utilityFile)
         else:
             print " File DNE"
 
+        self.tunnelCoords = (6,1)
+        self.anthillCoords = (2,2)
         self.loadedFiles = 1
 
 
@@ -66,7 +64,7 @@ class AIPlayer(Player):
     def getPlacement(self, currentState):
 
         if currentState.phase == SETUP_PHASE_1:
-            return[(0,0), (6,1), (0,3), (1,3), (2,3), (3,3), (4,3),( 6,3), (7,3), (8,3), (9,3)];    #grass placement
+            return[(2,2), (6,1), (0,3), (0,2), (0,1), (0,0), (1,3),(1,2), (1,1), (1,0), (9,3)];    #grass placement
         #Randomly places enemy food, *stolen from Dr. Nuxoll's Simple Food Gatherer AI*
         elif currentState.phase == SETUP_PHASE_2:
             numToPlace = 2
@@ -102,6 +100,18 @@ class AIPlayer(Player):
         bestMove = None
         bestUtility = -100
 
+        chance = random.randint(1,10)
+        if chance > 7 and len(moveList) > 2:
+            return moveList[random.randint(0,len(moveList) - 1)]
+
+        myInv = getCurrPlayerInventory(currentState)
+        if(getAntAt(currentState, self.anthillCoords) == None and myInv.foodCount >= 2
+        and (len(getAntList(currentState, currentState.whoseTurn, (R_SOLDIER,))) < 1)):
+                moveList.append(Move(BUILD, [self.anthillCoords], R_SOLDIER))
+        if(getAntAt(currentState, self.anthillCoords) == None and myInv.foodCount >= 1
+        and (len(getAntList(currentState, currentState.whoseTurn, (WORKER,))) < 1)):
+            moveList.append(Move(BUILD, [self.anthillCoords], WORKER))
+
         for move in moveList:
             #get what the next state will look like if current move is performed
             nextState = getNextState(currentState, move)
@@ -109,12 +119,6 @@ class AIPlayer(Player):
             if currStateUtility > bestUtility:
                bestUtility = currStateUtility
                bestMove = move
-
-        #add in random chance for move
-        numStates =  len(self.utilityList)
-        chance = (1/numStates)*(random.randint(1,1000))
-        if chance > 10:
-            bestMove =  moveList[random.randint(0,len(moves) - 1)]
         if bestMove != None:
             return bestMove
         else:#If we are out of moves, end our turn
@@ -167,6 +171,9 @@ class AIPlayer(Player):
         food_1_dist = 100
         food_2_dist = 100
         workerCoords = (0,0)
+        queenCoord = None
+        rsoldierCoord = None
+        enemyQueen = None
         isCarrying = 0
 
         for inv in currentState.inventories:
@@ -177,6 +184,7 @@ class AIPlayer(Player):
                 for ant in enemyInv.ants:
                     if ant.type == QUEEN:
                         enemyQueen = ant
+                numEnemy = len(enemyInv.ants)
 
         for food in getConstrList(currentState, None, (FOOD,)):
             if food.coords[1] < 5:
@@ -184,13 +192,13 @@ class AIPlayer(Player):
             all_food_coords.append(food.coords)
 
         foodNum = playerInv.foodCount
-        tunnel = getConstrList(currentState, currentState.whoseTurn, (TUNNEL,))
-        anthill = getConstrList(currentState, currentState.whoseTurn, (ANTHILL,))
-        anthillCoords = anthill[0].coords
 
         for ant in playerInv.ants:
             if ant.type == QUEEN:
                 playerQueen = ant
+                queenCoord =  ant.coords
+            if ant.type == R_SOLDIER:
+                rsoldierCoord = ant.coords
             if ant.type == WORKER:
                 workerCoords = ant.coords
                 for coords in all_food_coords:
@@ -198,14 +206,9 @@ class AIPlayer(Player):
                         isCarrying = 1
                 if ant.carrying == True:
                     isCarrying = 1
-                food_1_dist = approxDist(workerCoords, my_food_coords[0])
-                food_2_dist = approxDist(workerCoords, my_food_coords[1])
-                if tunnel != None:
-                    tunnelCoords = tunnel[0].coords
-                    tunnelDist = approxDist(workerCoords, tunnelCoords)
-                    if isCarrying and (ant.coords == tunnelCoords or ant.coords == anthillCoords):
-                        isCarrying = 0
-                        foodNum += 1
+                if isCarrying and (ant.coords == self.tunnelCoords or ant.coords == self.anthillCoords):
+                    isCarrying = 0
+                    foodNum += 1
 
         #checks to see if anyone has won/lost
         if enemyQueen is None or playerInv.foodCount >= 12 or (len(enemyInv.ants) == 1 and enemyInv.foodCount == 0):
@@ -215,7 +218,7 @@ class AIPlayer(Player):
         else:
             win = 0.5
 
-        tempList = [foodNum, workerCoords, isCarrying, food_1_dist, food_2_dist, tunnelDist, win]
+        tempList = [win, foodNum, workerCoords, isCarrying, rsoldierCoord, numEnemy]
         return tempList
 
     #
@@ -233,27 +236,13 @@ class AIPlayer(Player):
         currState = self.compressState(currentState)
         nextState = self.compressState(potentialState)
 
-##        #edge cases
-##        if self.loadedFiles:
-##            self.stateList.append(currState)
-##            self.utilityList.append(0)
-##            self.loadedFiles = 0
-
-##        inv = getCurrPlayerInventory(currentState)
-##        if len(inv.ants) < 2:
-##            self.stateList.append(currState)
-##            self.utilityList.append(0)
-
-
-##        if len(self.stateList) == 0:
-##            self.stateList.append(currState)
-##            self.utilityList.append(0)
+        self.utilityList.append(0)
 
         if currState not in self.stateList:
             self.stateList.append(currState)
             indexCurr = self.stateList.index(currState)
             self.utilityList.append(0)
-            
+
         indexCurr = self.stateList.index(currState)
 
         if nextState not in self.stateList:
@@ -276,9 +265,9 @@ class AIPlayer(Player):
     #
     #Returns: A value between 1 & -1
     def reward(self, compressStated):
-        if compressStated[6] == 1:
+        if compressStated[0] == 1:
             return 1 #won game
-        elif compressStated[6] == 0:
+        elif compressStated[0] == 0:
             return -1.0 #lost game
         else:
             return -0.1
