@@ -35,22 +35,18 @@ class AIPlayer(Player):
         #Constants
         self.alpha = .2
         self.lambdA= .8
+        self.tunnelCoords = (6,1)
+        self.anthillCoords = (2,2)
 
         #loads utility file if it is present, leaves list empty otherwise
         self.utilityList = []
         self.stateList = []
-        
         if os.path.exists('larsonn17_simpson18_utilities.pk1'):
-            print " File exists!"
+            print " Files exist, loading"
             self.utilityList = self.readUtility()
             self.stateList = self.readState()
         else:
-            print " File DNE"
-
-        self.tunnelCoords = (6,1)
-        self.anthillCoords = (2,2)
-        self.loadedFiles = 1
-
+            print " No previous state/utility files"
 
     #getPlacement
     #Parameters:
@@ -64,7 +60,7 @@ class AIPlayer(Player):
     def getPlacement(self, currentState):
 
         if currentState.phase == SETUP_PHASE_1:
-            return[(2,2), (6,1), (0,3), (0,2), (0,1), (0,0), (1,3),(1,2), (1,1), (1,0), (9,3)];    #grass placement
+            return[self.anthillCoords, self.tunnelCoords, (0,3), (0,2), (0,1), (0,0), (1,3),(1,2), (1,1), (1,0), (9,3)];    #grass placement
         #Randomly places enemy food, *stolen from Dr. Nuxoll's Simple Food Gatherer AI*
         elif currentState.phase == SETUP_PHASE_2:
             numToPlace = 2
@@ -100,14 +96,22 @@ class AIPlayer(Player):
         bestMove = None
         bestUtility = -100
 
+        #randomly select a random move to allow for learning
         chance = random.randint(1,10)
-        if chance > 7 and len(moveList) > 2:
-            return moveList[random.randint(0,len(moveList) - 1)]
+        if chance > 8 and len(moveList) > 2:
+            move = moveList[random.randint(0,len(moveList) - 1)]
+            nextState = getNextState(currentState, move)
+            currStateUtility = self.updateUtility(currentState, nextState)
+            return move
 
         myInv = getCurrPlayerInventory(currentState)
-        if(getAntAt(currentState, self.anthillCoords) == None and myInv.foodCount >= 2
+        #only allow AI to construct additional units in certain situations,
+        #training for this is outside scope of our implementation
+        ##build a ranged soldier (max 1)
+        if(getAntAt(currentState, self.anthillCoords) == None and myInv.foodCount >= 4
         and (len(getAntList(currentState, currentState.whoseTurn, (R_SOLDIER,))) < 1)):
                 moveList.append(Move(BUILD, [self.anthillCoords], R_SOLDIER))
+        ##build a worker if our original is lost
         if(getAntAt(currentState, self.anthillCoords) == None and myInv.foodCount >= 1
         and (len(getAntList(currentState, currentState.whoseTurn, (WORKER,))) < 1)):
             moveList.append(Move(BUILD, [self.anthillCoords], WORKER))
@@ -115,7 +119,8 @@ class AIPlayer(Player):
         for move in moveList:
             #get what the next state will look like if current move is performed
             nextState = getNextState(currentState, move)
-            currStateUtility = self.addUtility(currentState, nextState)
+            currStateUtility = self.updateUtility(currentState, nextState)
+            #find the state with the best outcome
             if currStateUtility > bestUtility:
                bestUtility = currStateUtility
                bestMove = move
@@ -149,7 +154,7 @@ class AIPlayer(Player):
     #   hasWon - True if the player has won the game, False if the player lost. (Boolean)
     #
     def registerWin(self, hasWon):
-        #method templaste, not implemented
+        #write to the utility and state
         self.writeStateAndUtil(self.utilityList, self.stateList)
         print "Number of States: " + str(len(self.stateList))
         pass
@@ -165,38 +170,31 @@ class AIPlayer(Player):
     #
     def compressState(self, currentState):
         tempList = []
-        my_food_coords = []
         all_food_coords = []
-        tunnelDist = 100
-        food_1_dist = 100
-        food_2_dist = 100
-        workerCoords = (0,0)
-        queenCoord = None
-        rsoldierCoord = None
-        enemyQueen = None
         isCarrying = 0
+        workerCoords = (0,0)
+        rsoldierCoord = None
+        playerQueen = None
+        enemyQueen = None
 
         for inv in currentState.inventories:
             if inv.player == currentState.whoseTurn:
                 playerInv = inv
             else:
                 enemyInv = inv
+                numEnemy = len(enemyInv.ants)
                 for ant in enemyInv.ants:
                     if ant.type == QUEEN:
                         enemyQueen = ant
-                numEnemy = len(enemyInv.ants)
-
+        #all food locations
         for food in getConstrList(currentState, None, (FOOD,)):
-            if food.coords[1] < 5:
-                my_food_coords.append(food.coords)
             all_food_coords.append(food.coords)
 
         foodNum = playerInv.foodCount
-
+        #get information about our ants
         for ant in playerInv.ants:
             if ant.type == QUEEN:
                 playerQueen = ant
-                queenCoord =  ant.coords
             if ant.type == R_SOLDIER:
                 rsoldierCoord = ant.coords
             if ant.type == WORKER:
@@ -222,7 +220,7 @@ class AIPlayer(Player):
         return tempList
 
     #
-    #addUtility
+    #updateUtility
     #
     #Description: takes a the current state and determines if it
     #has been visited before
@@ -232,11 +230,9 @@ class AIPlayer(Player):
     #   potentialState - the potential state if the move was made
     #
     #Returns: Utility of state
-    def addUtility (self, currentState, potentialState):
+    def  updateUtility(self, currentState, potentialState):
         currState = self.compressState(currentState)
         nextState = self.compressState(potentialState)
-
-        self.utilityList.append(0)
 
         if currState not in self.stateList:
             self.stateList.append(currState)
@@ -253,7 +249,6 @@ class AIPlayer(Player):
             self.utilityList[indexCurr] += self.alpha*(self.reward(currState) + self.lambdA*self.utilityList[indexNext] - self.utilityList[indexCurr])
 
         return self.utilityList[indexCurr]
-
 
     #
     #reward
@@ -278,6 +273,7 @@ class AIPlayer(Player):
     #
     #Parameters
     #   utilityList - a list of utility values
+    #   stateList - a list of state values
     #
     #Reference: https://docs.python.org/2/library/pickle.html
     #
@@ -289,7 +285,6 @@ class AIPlayer(Player):
         stateFile = open("AI/" + 'larsonn17_simpson18_states.pk1', 'wb')
         pickle.dump(stateList, stateFile)
         stateFile.close()
-
 
     #
     #readUtility
