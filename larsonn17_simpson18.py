@@ -231,23 +231,32 @@ class AIPlayer(Player):
     #
     #Returns: Utility of state
     def  updateUtility(self, currentState, potentialState):
+
+        #get the compressed current state
         currState = self.compressState(currentState)
+
+        #get the compressed next state
         nextState = self.compressState(potentialState)
 
+        #append the state and utility if the current state is new
         if currState not in self.stateList:
             self.stateList.append(currState)
             indexCurr = self.stateList.index(currState)
             self.utilityList.append(0)
 
+        #get the index of the current state in list
         indexCurr = self.stateList.index(currState)
 
+        #append the state and utility if the next state is new
         if nextState not in self.stateList:
             self.stateList.append(nextState)
             self.utilityList.append(0)
-        else:
+        else: #else update the utility of the current state using TD learning algorithm
             indexNext = self.stateList.index(nextState)
             self.utilityList[indexCurr] += self.alpha*(self.reward(currState) + self.lambdA*self.utilityList[indexNext] - self.utilityList[indexCurr])
             print self.utilityList[indexCurr]
+
+        #return the utility of the current state
         return self.utilityList[indexCurr]
 
     #
