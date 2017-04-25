@@ -251,7 +251,7 @@ class AIPlayer(Player):
         else:
             indexNext = self.stateList.index(nextState)
             self.utilityList[indexCurr] += self.alpha*(self.reward(currState) + self.lambdA*self.utilityList[indexNext] - self.utilityList[indexCurr])
-
+            print self.utilityList[indexCurr]
         return self.utilityList[indexCurr]
 
 
